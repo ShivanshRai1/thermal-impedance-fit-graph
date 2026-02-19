@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thermal Impedance Fit Graphs</title>
+  <style>
+    :root {
+      --bg: #f2f5f9;
+      --panel: #ffffff;
+      --ink: #1a2433;
+      --muted: #5f6b7c;
+      --border: #d8e0ea;
+      --accent: #0f4c81;
+      --danger: #b42318;
+    }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 15% 5%, #d9e8ff 0, #f2f5f9 35%, #edf2f7 100%);
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    .sub { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 28px rgba(14, 30, 37, 0.08);
+      padding: 14px;
+    }
+    label { display: block; font-size: 13px; margin: 8px 0 4px; font-weight: 600; }
+    textarea, input {
+      width: 100%;
+      box-sizing: border-box;
+      font: 13px/1.45 "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 8px 10px;
+      color: #122033;
+    }
+    textarea { min-height: 64px; resize: vertical; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    button {
+      margin-top: 12px;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { filter: brightness(1.06); }
+    .err { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 8px; }
+    .meta { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .plot {
+      min-height: 520px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+    }
+    .plot img {
+      max-width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: none;
+    }
+    .placeholder {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      max-width: 320px;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .plot { min-height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Thermal Impedance Fit Graphs</h1>
+    <p class="sub">Overlay digitized Zth-tp points with Foster and Cauer Nth-order fit curves.</p>
+    <p class="sub">URL-callable endpoint docs: <a href="/zth-fit">/zth-fit</a></p>
+
+    <div class="layout">
+      <div class="card">
+        <label for="order">Order N</label>
+        <input id="order" type="number" min="1" value="5" />
+
+        <label for="tp">Digitized tp values (s)</label>
+        <textarea id="tp">1e-4,3e-4,1e-3,3e-3,1e-2,3e-2,1e-1,3e-1,1,3,10,30,100</textarea>
+
+        <label for="zth">Digitized Zth values (K/W)</label>
+        <textarea id="zth">0.01,0.03,0.06,0.10,0.16,0.23,0.31,0.38,0.44,0.49,0.53,0.56,0.58</textarea>
+
+        <div class="row">
+          <div>
+            <label for="fosterR">Foster R (K/W)</label>
+            <textarea id="fosterR">0.05,0.12,0.14,0.15,0.12</textarea>
+          </div>
+          <div>
+            <label for="fosterC">Foster C (J/K)</label>
+            <textarea id="fosterC">0.002,0.02,0.2,2.0,20.0</textarea>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="cauerR">Cauer R (K/W)</label>
+            <textarea id="cauerR">0.02,0.08,0.15,0.18,0.15</textarea>
+          </div>
+          <div>
+            <label for="cauerC">Cauer C (J/K)</label>
+            <textarea id="cauerC">0.01,0.04,0.22,1.8,16.0</textarea>
+          </div>
+        </div>
+
+        <button id="plotBtn">Render Overlay Plot</button>
+        <div id="err" class="err"></div>
+        <div id="meta" class="meta"></div>
+      </div>
+
+      <div class="card plot">
+        <img id="plotImg" alt="Zth overlay plot" />
+        <div id="placeholder" class="placeholder">Render to display Zth vs tp with actual points and both fitted curves.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('plotBtn');
+    const err = document.getElementById('err');
+    const meta = document.getElementById('meta');
+    const img = document.getElementById('plotImg');
+    const placeholder = document.getElementById('placeholder');
+
+    function value(id) {
+      return document.getElementById(id).value;
+    }
+
+    async function renderPlot() {
+      err.textContent = '';
+      meta.textContent = 'Rendering...';
+      btn.disabled = true;
+
+      const payload = {
+        order: Number(value('order')),
+        tp: value('tp'),
+        zth: value('zth'),
+        foster_r: value('fosterR'),
+        foster_c: value('fosterC'),
+        cauer_r: value('cauerR'),
+        cauer_c: value('cauerC')
+      };
+
+      try {
+        const res = await fetch('/plot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to render plot.');
+        }
+
+        img.src = `data:image/png;base64,${data.image_base64}`;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+        meta.textContent = `Actual points: ${data.meta.n_points_actual} | Curve samples: ${data.meta.n_points_curve} | Order used: ${data.meta.order_used}`;
+      } catch (e) {
+        err.textContent = e.message;
+        meta.textContent = '';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener('click', renderPlot);
+  </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zth Overlay Interactive</title>
+  <style>
+    :root {
+      --bg: #eef3f9;
+      --ink: #132236;
+      --muted: #4e6077;
+      --panel: #ffffff;
+      --border: #d2ddeb;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 10% 0%, #dbe9ff 0, #eef3f9 45%, #e8edf5 100%);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    .head {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 8px 26px rgba(16, 28, 44, 0.08);
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    #plot {
+      height: 640px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 26px rgba(16, 28, 44, 0.08);
+    }
+    @media (max-width: 900px) {
+      #plot {
+        height: 460px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Zth Overlay Graph (Interactive)</h1>
+      <p class="sub">Hover for exact values. Scroll/drag to zoom and pan.</p>
+    </div>
+    <div id="plot"></div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script>
+    const payload = JSON.parse({{ payload_json|tojson }});
+
+    const traces = [
+      {
+        x: payload.tp_actual,
+        y: payload.zth_actual,
+        mode: 'markers',
+        name: 'Digitized Zth points',
+        marker: { color: '#0f172a', size: 7, opacity: 0.9 },
+        hovertemplate: 'tp=%{x:.6g} s<br>Zth=%{y:.6g} K/W<extra></extra>'
+      },
+      {
+        x: payload.tp_grid,
+        y: payload.zth_foster,
+        mode: 'lines',
+        name: 'Foster fit curve',
+        line: { color: '#2563eb', width: 2.4 },
+        hovertemplate: 'tp=%{x:.6g} s<br>Zth=%{y:.6g} K/W<extra></extra>'
+      },
+      {
+        x: payload.tp_grid,
+        y: payload.zth_cauer,
+        mode: 'lines',
+        name: 'Cauer fit curve',
+        line: { color: '#dc2626', width: 2.4, dash: 'dash' },
+        hovertemplate: 'tp=%{x:.6g} s<br>Zth=%{y:.6g} K/W<extra></extra>'
+      }
+    ];
+
+    const layout = {
+      title: { text: `Zth vs tp Overlay (Order ${payload.order_used})` },
+      xaxis: { title: 'tp (s)', type: 'log', showgrid: true, gridcolor: '#e3e9f3' },
+      yaxis: { title: 'Zth (K/W)', showgrid: true, gridcolor: '#e3e9f3' },
+      hovermode: 'closest',
+      legend: { orientation: 'h', y: 1.12, x: 0.0 },
+      margin: { t: 76, l: 72, r: 24, b: 62 },
+      plot_bgcolor: '#ffffff',
+      paper_bgcolor: '#ffffff'
+    };
+
+    const config = {
+      displaylogo: false,
+      responsive: true,
+      modeBarButtonsToAdd: ['toggleSpikelines']
+    };
+
+    Plotly.newPlot('plot', traces, layout, config);
+  </script>
+</body>
+</html>

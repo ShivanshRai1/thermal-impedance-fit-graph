@@ -1,0 +1,5 @@
+Flask>=2.3
+numpy>=1.24
+matplotlib>=3.8
+thermal-network @ git+https://github.com/erickschulz/thermal-network
+gunicorn
