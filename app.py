@@ -50,7 +50,22 @@ def _curves_to_dict(curves: Any, order: int) -> dict[str, Any]:
 
 @app.get("/")
 def index() -> str:
-    return render_template("index.html")
+    return render_template("index.html", prefill=None)
+
+
+@app.post("/")
+def index_post() -> str:
+    payload = request.get_json(silent=True) or {}
+    prefill = {
+        "order": payload.get("order", 5),
+        "tp": payload.get("tp", "1e-4,3e-4,1e-3,3e-3,1e-2,3e-2,1e-1,3e-1,1,3,10,30,100"),
+        "zth": payload.get("zth", "0.01,0.03,0.06,0.10,0.16,0.23,0.31,0.38,0.44,0.49,0.53,0.56,0.58"),
+        "foster_r": payload.get("foster_r", "0.05,0.12,0.14,0.15,0.12"),
+        "foster_c": payload.get("foster_c", "0.002,0.02,0.2,2.0,20.0"),
+        "cauer_r": payload.get("cauer_r", "0.02,0.08,0.15,0.18,0.15"),
+        "cauer_c": payload.get("cauer_c", "0.01,0.04,0.22,1.8,16.0"),
+    }
+    return render_template("index.html", prefill=prefill)
 
 
 @app.get("/zth-fit")

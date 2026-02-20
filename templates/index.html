@@ -105,33 +105,33 @@
     <div class="layout">
       <div class="card">
         <label for="order">Order N</label>
-        <input id="order" type="number" min="1" value="5" />
+        <input id="order" type="number" min="1" value="{{ prefill.order if prefill else 5 }}" />
 
         <label for="tp">Digitized tp values (s)</label>
-        <textarea id="tp">1e-4,3e-4,1e-3,3e-3,1e-2,3e-2,1e-1,3e-1,1,3,10,30,100</textarea>
+        <textarea id="tp">{{ prefill.tp if prefill else "1e-4,3e-4,1e-3,3e-3,1e-2,3e-2,1e-1,3e-1,1,3,10,30,100" }}</textarea>
 
         <label for="zth">Digitized Zth values (K/W)</label>
-        <textarea id="zth">0.01,0.03,0.06,0.10,0.16,0.23,0.31,0.38,0.44,0.49,0.53,0.56,0.58</textarea>
+        <textarea id="zth">{{ prefill.zth if prefill else "0.01,0.03,0.06,0.10,0.16,0.23,0.31,0.38,0.44,0.49,0.53,0.56,0.58" }}</textarea>
 
         <div class="row">
           <div>
             <label for="fosterR">Foster R (K/W)</label>
-            <textarea id="fosterR">0.05,0.12,0.14,0.15,0.12</textarea>
+            <textarea id="fosterR">{{ prefill.foster_r if prefill else "0.05,0.12,0.14,0.15,0.12" }}</textarea>
           </div>
           <div>
             <label for="fosterC">Foster C (J/K)</label>
-            <textarea id="fosterC">0.002,0.02,0.2,2.0,20.0</textarea>
+            <textarea id="fosterC">{{ prefill.foster_c if prefill else "0.002,0.02,0.2,2.0,20.0" }}</textarea>
           </div>
         </div>
 
         <div class="row">
           <div>
             <label for="cauerR">Cauer R (K/W)</label>
-            <textarea id="cauerR">0.02,0.08,0.15,0.18,0.15</textarea>
+            <textarea id="cauerR">{{ prefill.cauer_r if prefill else "0.02,0.08,0.15,0.18,0.15" }}</textarea>
           </div>
           <div>
             <label for="cauerC">Cauer C (J/K)</label>
-            <textarea id="cauerC">0.01,0.04,0.22,1.8,16.0</textarea>
+            <textarea id="cauerC">{{ prefill.cauer_c if prefill else "0.01,0.04,0.22,1.8,16.0" }}</textarea>
           </div>
         </div>
 
