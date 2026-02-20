@@ -48,7 +48,7 @@ def _curves_to_dict(curves: Any, order: int) -> dict[str, Any]:
     }
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST", "HEAD"])
 def index() -> str:
     if request.method == "POST":
         payload = request.get_json(silent=True) or {}
