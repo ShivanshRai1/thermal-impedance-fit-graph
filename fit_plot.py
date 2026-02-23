@@ -123,6 +123,7 @@ def render_overlay_png_bytes(curves: CurveBundle) -> bytes:
         curves.zth_foster,
         color="#2563eb",
         linewidth=2.1,
+        alpha=0.8,
         label="Foster fit curve",
         zorder=2,
     )
@@ -130,10 +131,10 @@ def render_overlay_png_bytes(curves: CurveBundle) -> bytes:
         curves.tp_grid,
         curves.zth_cauer,
         color="#dc2626",
-        linewidth=2.1,
-        linestyle="--",
+        linewidth=2.6,
+        linestyle=(0, (5, 3)),
         label="Cauer fit curve",
-        zorder=1,
+        zorder=4,
     )
 
     ax.set_xscale("log")
