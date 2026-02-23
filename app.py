@@ -16,6 +16,60 @@ from fit_plot import (
 app = Flask(__name__)
 
 
+def _safe_min_max(values: list[float]) -> tuple[float | None, float | None]:
+    if not values:
+        return None, None
+    return min(values), max(values)
+
+
+def _payload_summary(values: Any) -> dict[str, Any]:
+    def _to_list(name: str) -> list[float]:
+        raw = values.get(name, "")
+        try:
+            return parse_number_list(raw).tolist()
+        except Exception:
+            return []
+
+    tp = _to_list("tp")
+    zth = _to_list("zth")
+    foster_r = _to_list("foster_r")
+    foster_c = _to_list("foster_c")
+    cauer_r = _to_list("cauer_r")
+    cauer_c = _to_list("cauer_c")
+
+    return {
+        "order": values.get("order"),
+        "len_tp": len(tp),
+        "len_zth": len(zth),
+        "len_foster_r": len(foster_r),
+        "len_foster_c": len(foster_c),
+        "len_cauer_r": len(cauer_r),
+        "len_cauer_c": len(cauer_c),
+        "tp_min_max": _safe_min_max(tp),
+        "zth_min_max": _safe_min_max(zth),
+        "cauer_r_min_max": _safe_min_max(cauer_r),
+        "cauer_c_min_max": _safe_min_max(cauer_c),
+    }
+
+
+def _curve_summary(curves: Any) -> dict[str, Any]:
+    zth_actual = [float(v) for v in curves.zth_actual.tolist()]
+    zth_foster = [float(v) for v in curves.zth_foster.tolist()]
+    zth_cauer = [float(v) for v in curves.zth_cauer.tolist()]
+    return {
+        "zth_actual_min_max": _safe_min_max(zth_actual),
+        "zth_foster_min_max": _safe_min_max(zth_foster),
+        "zth_cauer_min_max": _safe_min_max(zth_cauer),
+    }
+
+
+def _log_debug(tag: str, payload: Any, curves: Any | None = None) -> None:
+    info: dict[str, Any] = {"payload": _payload_summary(payload)}
+    if curves is not None:
+        info["curves"] = _curve_summary(curves)
+    print(f"[{tag}] {json.dumps(info)}", flush=True)
+
+
 def _build_curves_from_mapping(values: Any) -> Any:
     tp = parse_number_list(values.get("tp", ""))
     zth = parse_number_list(values.get("zth", ""))
@@ -76,6 +130,7 @@ def plot_overlay() -> Any:
 
     try:
         curves, order = _build_curves_from_mapping(payload)
+        _log_debug("plot", payload, curves)
         png_b64 = render_overlay_png_base64(curves)
 
         return jsonify(
@@ -96,6 +151,7 @@ def plot_overlay() -> Any:
 def zth_fit_png() -> Any:
     try:
         curves, _ = _build_curves_from_mapping(request.args)
+        _log_debug("zth-fit.png", request.args, curves)
         png = render_overlay_png_bytes(curves)
         return Response(png, mimetype="image/png")
     except Exception as exc:
@@ -107,6 +163,7 @@ def zth_overlay_png_api() -> Any:
     try:
         values = request.args if request.method == "GET" else (request.get_json(silent=True) or {})
         curves, _ = _build_curves_from_mapping(values)
+        _log_debug("api/zth-overlay.png", values, curves)
         png = render_overlay_png_bytes(curves)
         return Response(png, mimetype="image/png")
     except Exception as exc:
@@ -118,6 +175,7 @@ def zth_overlay_data_api() -> Any:
     try:
         values = request.args if request.method == "GET" else (request.get_json(silent=True) or {})
         curves, order = _build_curves_from_mapping(values)
+        _log_debug("api/zth-overlay-data", values, curves)
         return jsonify(_curves_to_dict(curves, order))
     except Exception as exc:
         return jsonify({"error": str(exc)}), 400
